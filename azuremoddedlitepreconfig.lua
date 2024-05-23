@@ -8,9 +8,9 @@ repeat wait() until game:IsLoaded()
 
 Drawing = Drawing
 mousemoverel = mousemoverel
-hookmetamethod = hookmetamethod
-newcclosure = newcclosure
-getnamecallmethod = getnamecallmethod
+--hookmetamethod = hookmetamethod
+--newcclosure = newcclosure
+--getnamecallmethod = getnamecallmethod
 
 -- Variables
 
@@ -35,7 +35,11 @@ local LocalPlr = Players.LocalPlayer
 
 local TargBindEnabled, CamBindEnabled = false, false
 
-local AntiCheatNamecall
+local TargResolvePos
+
+local Connections = {}
+
+--local AntiCheatNamecall
 
 local StrafeSpeed = 0
 
@@ -141,8 +145,6 @@ local CamHighlight = Instance.new("Highlight", CoreGui)
 local TargetAimbot = {
 	Enabled = false, 
 	Keybind = nil, 
-
-	Connections = {}, 
 
 	Prediction = nil, 
 	RealPrediction = nil, 
@@ -312,9 +314,19 @@ local function Resolver(Target, Aimbot)
 	return Velocity
 end
 
+local function AimRedirect()
+	if TargetAimbot.Enabled and TargBindEnabled then
+		if TargetAimbot.Resolver then
+			ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
+		else
+			ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
+		end
+	end
+end
+
 -- Window
 
-local Actyrn = UiLib:CreateWindow("Azure Modded | Actyrn", Vector2.new(500, 600), Enum.KeyCode.RightShift)
+local Actyrn = UiLib:CreateWindow("Azure Modded | Actyrn | .gg/hUvujCnGMb", Vector2.new(500, 600), Enum.KeyCode.RightShift)
 
 -- Tabs
 
@@ -546,15 +558,9 @@ CamHighlightTog:AddColorpicker(Color3.fromRGB(90, 65, 110), function(Value)
 	CamHighlight.OutlineColor = Value
 end, "CameraHighlightOutlineColor")
 
-if game["PlaceId"] == 9825515356 then
-	CameraAimbotSec:AddDropdown("Aim Method", {"Camera", "Mouse"}, "Mouse", false, function(Value)
-		CameraAimbot.AimMethod = Value
-	end, "CameraAimMethod")
-else
-	CameraAimbotSec:AddDropdown("Aim Method", {"Camera", "Mouse"}, "Camera", false, function(Value)
-		CameraAimbot.AimMethod = Value
-	end, "CameraAimMethod")
-end
+CameraAimbotSec:AddDropdown("Aim Method", {"Camera", "Mouse"}, "Camera", false, function(Value)
+	CameraAimbot.AimMethod = Value
+end, "CameraAimMethod")
 
 CameraAimbotSec:AddToggle("Smoothing", false, function(Value)
 	CameraAimbot.Smoothing = Value
@@ -610,7 +616,29 @@ end, "AutoReload")
 
 local TrashTalkTog = UtilitiesSec:AddToggle("Trash Talk", false, function(Value)
 	if Value then
-		local TrashTalkWords = {"gg/halalgaming", "gg/hUvujCnGMb", "FemboyAssPounder", "How to aim pls help", "wow my little brother was playing and beat you :rofl:", "Mobile player beat u Lol XD", "420 ping and u got SLAMMED", "ur bad", "seed", "im not locking ur just bad", "clown", "sonned", "LOLL UR BAD", "dont even try.. ur not enough for the alpha", "ez", "gg = get good", "my grandmas better than u :skull:", "hop off kid", "bro cannot aim", "u got absolutely DOGGED on", "i run this server son", "what is bro doing :skull:", "no way"}
+		local TrashTalkWords = {
+			"gg/halalgaming", 
+			"gg/hUvujCnGMb", 
+			"How to aim pls help", 
+			"wow my little brother was playing and beat you :rofl:", 
+			"Mobile player beat u Lol XD", 
+			"420 ping and u got SLAMMED", 
+			"ur bad", 
+			"seed", 
+			"im not locking ur just bad", 
+			"clown", 
+			"sonned", 
+			"LOLL UR BAD", 
+			"dont even try.. ur not enough for the alpha", 
+			"ez", "gg = get good", 
+			"my grandmas better than u :skull:", 
+			"hop off kid", 
+			"bro cannot aim", 
+			"u got absolutely DOGGED on", 
+			"i run this server son", 
+			"what is bro doing :skull:", 
+			"no way u lost that"
+		}
 
 		ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(TrashTalkWords[math.random(#TrashTalkWords)], "All")
 	end
@@ -755,59 +783,27 @@ end
 
 do
 	for I, Tool in pairs(LocalPlr.Backpack:GetChildren()) do
-		if Tool:IsA("Tool") and not TargetAimbot.Connections[Tool] then
-			TargetAimbot.Connections[Tool] = Tool.Activated:Connect(function()
-				if TargetAimbot.Enabled and TargBindEnabled then
-					if TargetAimbot.Resolver then
-						ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (Resolver(TargetPlr, TargetAimbot) * TargetAimbot.RealPrediction))
-					else
-						ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
-					end
-				end
-			end)
+		if Tool:IsA("Tool") and not Connections[Tool] then
+			Connections[Tool] = Tool.Activated:Connect(AimRedirect)
 		end
 	end
 
 	for I, Tool in pairs(LocalPlr.Character:GetChildren()) do
-		if Tool:IsA("Tool") and not TargetAimbot.Connections[Tool] then
-			TargetAimbot.Connections[Tool] = Tool.Activated:Connect(function()
-				if TargetAimbot.Enabled and TargBindEnabled then
-					if TargetAimbot.Resolver then
-						ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (Resolver(TargetPlr, TargetAimbot) * TargetAimbot.RealPrediction))
-					else
-						ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
-					end
-				end
-			end)
+		if Tool:IsA("Tool") and not Connections[Tool] then
+			Connections[Tool] = Tool.Activated:Connect(AimRedirect)
 		end
 	end
 
 	LocalPlr.Character.ChildAdded:Connect(function(Tool)
-		if Tool:IsA("Tool") and not TargetAimbot.Connections[Tool] then
-			TargetAimbot.Connections[Tool] = Tool.Activated:Connect(function()
-				if TargetAimbot.Enabled and TargBindEnabled then
-					if TargetAimbot.Resolver then
-						ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (Resolver(TargetPlr, TargetAimbot) * TargetAimbot.RealPrediction))
-					else
-						ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
-					end
-				end
-			end)
+		if Tool:IsA("Tool") and not Connections[Tool] then
+			Connections[Tool] = Tool.Activated:Connect(AimRedirect)
 		end
 	end)
 
 	LocalPlr.CharacterAdded:Connect(function(Tool)
 		Tool.ChildAdded:Connect(function(Tool)
-			if Tool:IsA("Tool") and not TargetAimbot.Connections[Tool] then
-				TargetAimbot.Connections[Tool] = Tool.Activated:Connect(function()
-					if TargetAimbot.Enabled and TargBindEnabled then
-						if TargetAimbot.Resolver then
-							ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (Resolver(TargetPlr, TargetAimbot) * TargetAimbot.RealPrediction))
-						else
-							ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
-						end
-					end
-				end)
+			if Tool:IsA("Tool") and not Connections[Tool] then
+				Connections[Tool] = Tool.Activated:Connect(AimRedirect)
 			end
 		end)
 	end)
@@ -819,13 +815,19 @@ end
 RunService.Heartbeat:Connect(function()
 	if TargetAimbot.Enabled and TargBindEnabled then
 		if TargetAimbot.Resolver then
-			ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (Resolver(TargetPlr, TargetAimbot) * TargetAimbot.RealPrediction))
+			ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
 		else
 			ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
 		end
 	end
 end)
 --]]
+
+RunService.Heartbeat:Connect(function()
+	if TargetAimbot.Enabled and TargBindEnabled then
+		TargResolvePos = Resolver(TargetPlr, TargetAimbot)
+	end
+end)
 
 RunService.Heartbeat:Connect(function()
 	if Movement.FlightEnabled and not AntiLock.Enabled then
@@ -1264,7 +1266,7 @@ RunService.RenderStepped:Connect(function()
 	local Position, OnScreen
 
 	if TargetAimbot.Resolver then
-		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (Resolver(TargetPlr, TargetAimbot) * TargetAimbot.RealPrediction))
+		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
 	else
 		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
 	end
@@ -1290,7 +1292,7 @@ RunService.RenderStepped:Connect(function()
 	local Position, OnScreen
 
 	if TargetAimbot.Resolver then
-		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (Resolver(TargetPlr, TargetAimbot) * TargetAimbot.RealPrediction))
+		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
 	else
 		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
 	end
@@ -1474,6 +1476,7 @@ end)
 
 -- Hookmetamethod functions
 
+--[[
 AntiCheatNamecall = hookmetamethod(game, "__namecall", newcclosure(function(Self, ...)
 	local Arguments = {...}
 	local AntiCheats = {"BreathingHAMON", "TeleportDetect", "JJARC", "TakePoisonDamage", "CHECKER_1", "CHECKER", "GUI_CHECK", "OneMoreTime", "checkingSPEED", "BANREMOTE", "PERMAIDBAN", "KICKREMOTE", "BR_KICKPC", "FORCEFIELD", "Christmas_Sock", "VirusCough", "Symbiote", "Symbioted", "RequestAFKDisplay"}
@@ -1484,3 +1487,4 @@ AntiCheatNamecall = hookmetamethod(game, "__namecall", newcclosure(function(Self
 
 	return AntiCheatNamecall(Self, ...)
 end))
+--]]
