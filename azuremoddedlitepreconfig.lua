@@ -8,9 +8,9 @@ repeat wait() until game:IsLoaded()
 
 Drawing = Drawing
 mousemoverel = mousemoverel
---hookmetamethod = hookmetamethod
---newcclosure = newcclosure
---getnamecallmethod = getnamecallmethod
+-- hookmetamethod = hookmetamethod
+-- newcclosure = newcclosure
+-- getnamecallmethod = getnamecallmethod
 
 -- Variables
 
@@ -23,7 +23,6 @@ local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 
 local CoreGui = game:GetService("CoreGui")
-local CorePackages = game:GetService("CorePackages")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -39,7 +38,7 @@ local TargResolvePos
 
 local Connections = {}
 
---local AntiCheatNamecall
+-- local AntiCheatNamecall
 
 local StrafeSpeed = 0
 
@@ -123,7 +122,7 @@ StatsHealthBar.Position = UDim2.new(-0.00336122862, 0, 0.164894029, 0)
 StatsHealthBar.Size = UDim2.new(0, 130, 0, 20)
 
 local StatsGradient1 = Instance.new("UIGradient", StatsTop)
-StatsGradient1.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(185, 160, 230)), ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 90, 155))}
+StatsGradient1.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(230, 230, 230)), ColorSequenceKeypoint.new(1, Color3.fromRGB(155, 155, 155))}
 StatsGradient1.Rotation = 90
 
 local StatsGradient2 = Instance.new("UIGradient", StatsFrame)
@@ -135,7 +134,7 @@ StatsGradient3.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fro
 StatsGradient3.Rotation = 90
 
 local StatsGradient4 = Instance.new("UIGradient", StatsHealthBar)
-StatsGradient4.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(185, 160, 230)), ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 90, 155))}
+StatsGradient4.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(230, 230, 230)), ColorSequenceKeypoint.new(1, Color3.fromRGB(155, 155, 155))}
 StatsGradient4.Rotation = 90
 
 local TargHighlight = Instance.new("Highlight", CoreGui)
@@ -150,6 +149,7 @@ local TargetAimbot = {
 	RealPrediction = nil, 
 
 	Resolver = false, 
+	ResolverType = "Recalculate", 
 
 	JumpOffset = 0, 
 	RealJumpOffset = nil, 
@@ -158,8 +158,8 @@ local TargetAimbot = {
 	RealHitPart = nil, 
 
 	AutoPred = false, 
-	Notify = false, 
 
+	Notify = false, 
 	KoCheck = false, 
 
 	LookAt = false, 
@@ -192,6 +192,7 @@ local CameraAimbot = {
 	RealPrediction = nil, 
 
 	Resolver = false, 
+	ResolverType = "Recalculate", 
 
 	JumpOffset = 0, 
 	RealJumpOffset = nil, 
@@ -204,11 +205,11 @@ local CameraAimbot = {
 	AirCheckType = "Once in Air", 
 
 	AutoPred = false, 
+
 	Notify = false, 
-
 	KoCheck = false, 
-	Tracer = false, 
 
+	Tracer = false, 
 	Highlight = false, 
 
 	AimMethod = "Camera", 
@@ -311,22 +312,34 @@ local function Resolver(Target, Aimbot)
 	CurrentPosition = NewPosition
 	CurrentTime = NewTime
 
+	if Aimbot.ResolverType == "MoveDirection" then
+		return Target.Character.Humanoid.MoveDirection * Target.Character.Humanoid.WalkSpeed
+	end
+
 	return Velocity
 end
 
 local function AimRedirect()
 	if TargetAimbot.Enabled and TargBindEnabled then
-		if TargetAimbot.Resolver then
-			ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
+		if game.PlaceId == 2788229376 or game.PlaceId == 7213786345 or game.PlaceId == 16033173781 then
+			if TargetAimbot.Resolver then
+				ReplicatedStorage.MainEvent:FireServer("UpdateMousePos1", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
+			else
+				ReplicatedStorage.MainEvent:FireServer("UpdateMousePos1", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
+			end
 		else
-			ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
+			if TargetAimbot.Resolver then
+				ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
+			else
+				ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
+			end
 		end
 	end
 end
 
 -- Window
 
-local Actyrn = UiLib:CreateWindow("Azure Modded | Actyrn | .gg/hUvujCnGMb", Vector2.new(500, 600), Enum.KeyCode.RightShift)
+local Actyrn = UiLib:CreateWindow("Azure Modded | Actyrn | .gg/azuremodded", Vector2.new(500, 600), Enum.KeyCode.RightShift)
 
 -- Tabs
 
@@ -371,11 +384,15 @@ end, "TargetPrediction")
 
 local TargResolverTog = TargetAimbotSec:AddToggle("Antilock Resolver", false, function(Value)
 	TargetAimbot.Resolver = Value
-end, "TargetAntilockResolver")
+end, "TargetResolver")
 
-TargResolverTog:AddKeybind(nil, "TargetAntilockResolverKeybind")
+TargResolverTog:AddKeybind(nil, "TargetResolverKeybind")
 
-TargetAimbotSec:AddSlider("Jump Offset", -2, 0, 2, 100, function(Value)
+TargetAimbotSec:AddDropdown("Resolver Type", {"Recalculate", "MoveDirection"}, "Recalculate", false, function(Value)
+	TargetAimbot.ResolverType = Value
+end, "TargetResolverType")
+
+TargetAimbotSec:AddSlider("Jump Offset", -1, 0, 1, 100, function(Value)
 	TargetAimbot.JumpOffset = Value
 	TargetAimbot.RealJumpOffset = Value
 end, "TargetJumpOffset")
@@ -410,7 +427,7 @@ local TargDotTog = TargetAimbotSec:AddToggle("Dot", false, function(Value)
 	TargetAimbot.Dot = Value
 end, "TargetDot")
 
-TargDotTog:AddColorpicker(Color3.fromRGB(170, 120, 210), function(Value)
+TargDotTog:AddColorpicker(Color3.fromRGB(210, 210, 210), function(Value)
 	TargDotCircle.Color = Value
 	TargTracerLine.Color = Value
 end, "TargetDotTracerColor")
@@ -427,11 +444,11 @@ local TargHighlightTog = TargetAimbotSec:AddToggle("Highlight", false, function(
 	TargetAimbot.Highlight = Value
 end, "TargetHighlight")
 
-TargHighlightTog:AddColorpicker(Color3.fromRGB(170, 120, 210), function(Value)
+TargHighlightTog:AddColorpicker(Color3.fromRGB(210, 210, 210), function(Value)
 	TargHighlight.FillColor = Value
 end, "TargetHighlightFillColor")
 
-TargHighlightTog:AddColorpicker(Color3.fromRGB(90, 65, 110), function(Value)
+TargHighlightTog:AddColorpicker(Color3.fromRGB(25, 25, 25), function(Value)
 	TargHighlight.OutlineColor = Value
 end, "TargetHighlightOutlineColor")
 
@@ -447,7 +464,7 @@ local TargFovTog = TargetAimbotSec:AddToggle("FOV Visible", false, function(Valu
 	TargFovCircle.Visible = Value
 end, "TargetFOVVisible")
 
-TargFovTog:AddColorpicker(Color3.fromRGB(80, 15, 180), function(Value)
+TargFovTog:AddColorpicker(Color3.fromRGB(180, 180, 180), function(Value)
 	TargFovCircle.Color = Value
 end, "TargetFOVColor")
 
@@ -500,11 +517,15 @@ end, "CameraPrediction")
 
 local CamResolverTog = CameraAimbotSec:AddToggle("Antilock Resolver", false, function(Value)
 	CameraAimbot.Resolver = Value
-end, "CameraAntilockResolver")
+end, "CameraResolver")
 
-CamResolverTog:AddKeybind(nil, "CameraAntilockResolverKeybind")
+CamResolverTog:AddKeybind(nil, "CameraResolverKeybind")
 
-CameraAimbotSec:AddSlider("Jump Offset", -2, 0, 2, 100, function(Value)
+CameraAimbotSec:AddDropdown("Resolver Type", {"Recalculate", "MoveDirection"}, "Recalculate", false, function(Value)
+	CameraAimbot.ResolverType = Value
+end, "CameraResolverType")
+
+CameraAimbotSec:AddSlider("Jump Offset", -1, 0, 1, 100, function(Value)
 	CameraAimbot.JumpOffset = Value
 	CameraAimbot.RealJumpOffset = Value
 end, "CameraJumpOffset")
@@ -542,7 +563,7 @@ local CamTracerTog = CameraAimbotSec:AddToggle("Tracer", false, function(Value)
 	CameraAimbot.Tracer = Value
 end, "CameraTracer")
 
-CamTracerTog:AddColorpicker(Color3.fromRGB(170, 120, 210), function(Value)
+CamTracerTog:AddColorpicker(Color3.fromRGB(210, 210, 210), function(Value)
 	CamTracerLine.Color = Value
 end, "CameraTracerColor")
 
@@ -550,11 +571,11 @@ local CamHighlightTog = CameraAimbotSec:AddToggle("Highlight", false, function(V
 	CameraAimbot.Highlight = Value
 end, "CameraHighlight")
 
-CamHighlightTog:AddColorpicker(Color3.fromRGB(170, 120, 210), function(Value)
+CamHighlightTog:AddColorpicker(Color3.fromRGB(210, 210, 210), function(Value)
 	CamHighlight.FillColor = Value
 end, "CameraHighlightFillColor")
 
-CamHighlightTog:AddColorpicker(Color3.fromRGB(90, 65, 110), function(Value)
+CamHighlightTog:AddColorpicker(Color3.fromRGB(25, 25, 25), function(Value)
 	CamHighlight.OutlineColor = Value
 end, "CameraHighlightOutlineColor")
 
@@ -578,7 +599,7 @@ local CamFovTog = CameraAimbotSec:AddToggle("FOV Visible", false, function(Value
 	CamFovCircle.Visible = Value
 end, "CameraFOVVisible")
 
-CamFovTog:AddColorpicker(Color3.fromRGB(80, 15, 180), function(Value)
+CamFovTog:AddColorpicker(Color3.fromRGB(180, 180, 180), function(Value)
 	CamFovCircle.Color = Value
 end, "CameraFOVColor")
 
@@ -616,29 +637,7 @@ end, "AutoReload")
 
 local TrashTalkTog = UtilitiesSec:AddToggle("Trash Talk", false, function(Value)
 	if Value then
-		local TrashTalkWords = {
-			"gg/halalgaming", 
-			"gg/hUvujCnGMb", 
-			"How to aim pls help", 
-			"wow my little brother was playing and beat you :rofl:", 
-			"Mobile player beat u Lol XD", 
-			"420 ping and u got SLAMMED", 
-			"ur bad", 
-			"seed", 
-			"im not locking ur just bad", 
-			"clown", 
-			"sonned", 
-			"LOLL UR BAD", 
-			"dont even try.. ur not enough for the alpha", 
-			"ez", "gg = get good", 
-			"my grandmas better than u :skull:", 
-			"hop off kid", 
-			"bro cannot aim", 
-			"u got absolutely DOGGED on", 
-			"i run this server son", 
-			"what is bro doing :skull:", 
-			"no way u lost that"
-		}
+		local TrashTalkWords = {"gg/halalgaming", "gg/azuremodded", "How to aim pls help", "wow my little brother was playing and beat you :rofl:", "Mobile player beat u Lol XD", "420 ping and u got SLAMMED", "ur bad", "seed", "im not locking ur just bad", "clown", "sonned", "LOLL UR BAD", "dont even try.. ur not enough for the alpha", "ez", "gg = get good", "my grandmas better than u :skull:", "hop off kid", "bro cannot aim", "u got absolutely DOGGED on", "i run this server son", "what is bro doing :skull:", "no way u lost that"}
 
 		ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(TrashTalkWords[math.random(#TrashTalkWords)], "All")
 	end
@@ -686,7 +685,7 @@ local SelfDotTog = SelfDotSec:AddToggle("Enabled", false, function(Value)
 	SelfDot.Enabled = Value
 end, "SelfDotEnabled")
 
-SelfDotTog:AddColorpicker(Color3.fromRGB(170, 120, 210), function(Value)
+SelfDotTog:AddColorpicker(Color3.fromRGB(210, 210, 210), function(Value)
 	SelfDotCircle.Color = Value
 	SelfTracerLine.Color = Value
 end, "SelfDotCircleLineColor")
@@ -775,10 +774,6 @@ end, "AntiLockDesyncAngles")
 
 -- Code
 
-if CorePackages.Packages then
-	CorePackages.Packages:Destroy()
-end
-
 -- Target Aimbot Hook
 
 do
@@ -811,21 +806,26 @@ end
 
 -- Heartbeat Functions
 
---[[
-RunService.Heartbeat:Connect(function()
-	if TargetAimbot.Enabled and TargBindEnabled then
-		if TargetAimbot.Resolver then
-			ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
-		else
-			ReplicatedStorage.MainEvent:FireServer("UpdateMousePos", TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
-		end
-	end
-end)
---]]
-
 RunService.Heartbeat:Connect(function()
 	if TargetAimbot.Enabled and TargBindEnabled then
 		TargResolvePos = Resolver(TargetPlr, TargetAimbot)
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.LookAt then
+		LocalPlr.Character.Humanoid.AutoRotate = false
+		LocalPlr.Character.HumanoidRootPart.CFrame = CFrame.new(LocalPlr.Character.HumanoidRootPart.Position, Vector3.new(TargetPlr.Character.HumanoidRootPart.Position.X, LocalPlr.Character.HumanoidRootPart.Position.Y, TargetPlr.Character.HumanoidRootPart.Position.Z))
+	else
+		LocalPlr.Character.Humanoid.AutoRotate = true
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if TargetAimbot.Enabled and TargBindEnabled and TargetStrafe.Enabled then
+		StrafeSpeed = StrafeSpeed + TargetStrafe.Speed
+
+		LocalPlr.Character.HumanoidRootPart.CFrame = TargetPlr.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(StrafeSpeed), 0) * CFrame.new(0, TargetStrafe.Height, TargetStrafe.Distance)
 	end
 end)
 
@@ -959,119 +959,6 @@ RunService.Stepped:Connect(function()
 end)
 
 RunService.Stepped:Connect(function()
-	if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.AutoPred then
-		local Ping = math.round(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
-
-		if Ping < 10 then
-			TargetAimbot.RealPrediction = 0.097
-
-		elseif Ping < 20 then
-			TargetAimbot.RealPrediction = 0.112
-
-		elseif Ping < 30 then
-			TargetAimbot.RealPrediction = 0.115
-
-		elseif Ping < 40 then
-			TargetAimbot.RealPrediction = 0.125
-
-		elseif Ping < 50 then
-			TargetAimbot.RealPrediction = 0.122
-
-		elseif Ping < 60 then
-			TargetAimbot.RealPrediction = 0.123
-
-		elseif Ping < 70 then
-			TargetAimbot.RealPrediction = 0.132
-
-		elseif Ping < 80 then
-			TargetAimbot.RealPrediction = 0.134
-
-		elseif Ping < 90 then
-			TargetAimbot.RealPrediction = 0.137
-
-		elseif Ping < 100 then
-			TargetAimbot.RealPrediction = 0.146
-
-		elseif Ping < 110 then
-			TargetAimbot.RealPrediction = 0.148
-
-		elseif Ping < 120 then
-			TargetAimbot.RealPrediction = 0.144
-
-		elseif Ping < 130 then
-			TargetAimbot.RealPrediction = 0.157
-
-		elseif Ping < 140 then
-			TargetAimbot.RealPrediction = 0.122
-
-		elseif Ping < 150 then
-			TargetAimbot.RealPrediction = 0.152
-
-		elseif Ping < 160 then
-			TargetAimbot.RealPrediction = 0.163
-
-		elseif Ping < 170 then
-			TargetAimbot.RealPrediction = 0.192
-
-		elseif Ping < 180 then
-			TargetAimbot.RealPrediction = 0.193
-
-		elseif Ping < 190 then
-			TargetAimbot.RealPrediction = 0.167
-
-		elseif Ping < 200 then
-			TargetAimbot.RealPrediction = 0.166
-
-		elseif Ping < 210 then
-			TargetAimbot.RealPrediction = 0.168
-
-		elseif Ping < 220 then
-			TargetAimbot.RealPrediction = 0.166
-
-		elseif Ping < 230 then
-			TargetAimbot.RealPrediction = 0.157
-
-		elseif Ping < 240 then
-			TargetAimbot.RealPrediction = 0.168
-
-		elseif Ping < 250 then
-			TargetAimbot.RealPrediction = 0.165
-
-		elseif Ping < 260 then
-			TargetAimbot.RealPrediction = 0.176
-
-		elseif Ping < 270 then
-			TargetAimbot.RealPrediction = 0.177
-
-		elseif Ping < 280 then
-			TargetAimbot.RealPrediction = 0.181
-
-		elseif Ping < 290 then
-			TargetAimbot.RealPrediction = 0.182
-
-		elseif Ping < 300 then
-			TargetAimbot.RealPrediction = 0.185
-		end
-	else
-		TargetAimbot.RealPrediction = TargetAimbot.Prediction
-	end
-end)
-
-RunService.Stepped:Connect(function()
-	if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.LookAt then
-		LocalPlr.Character.HumanoidRootPart.CFrame = CFrame.new(LocalPlr.Character.HumanoidRootPart.Position, Vector3.new(TargetPlr.Character.HumanoidRootPart.Position.X, LocalPlr.Character.HumanoidRootPart.Position.Y, TargetPlr.Character.HumanoidRootPart.Position.Z))
-	end
-end)
-
-RunService.Stepped:Connect(function()
-	if TargetAimbot.Enabled and TargBindEnabled and TargetStrafe.Enabled then
-		StrafeSpeed = StrafeSpeed + TargetStrafe.Speed
-
-		LocalPlr.Character.HumanoidRootPart.CFrame = TargetPlr.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(StrafeSpeed), 0) * CFrame.new(0, TargetStrafe.Height, TargetStrafe.Distance)
-	end
-end)
-
-RunService.Stepped:Connect(function()
 	if CameraAimbot.Enabled and CamBindEnabled and CamlockPlr.Character.Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
 		CameraAimbot.RealJumpOffset = CameraAimbot.JumpOffset
 	else
@@ -1082,115 +969,18 @@ end)
 RunService.Stepped:Connect(function()
 	local AirCheckType
 
-	if CameraAimbot.AirCheckType == "Once in Air" then
-		AirCheckType = CamlockPlr.Character.Humanoid.FloorMaterial == Enum.Material.Air
-	else
-		AirCheckType = CamlockPlr.Character.Humanoid:GetState() == Enum.HumanoidStateType.Freefall
+	if CameraAimbot.Enabled and CamBindEnabled and CameraAimbot.UseAirPart then
+		if CameraAimbot.AirCheckType == "Once in Air" then
+			AirCheckType = CamlockPlr.Character.Humanoid.FloorMaterial == Enum.Material.Air
+		else
+			AirCheckType = CamlockPlr.Character.Humanoid:GetState() == Enum.HumanoidStateType.Freefall
+		end
 	end
 
 	if CameraAimbot.Enabled and CamBindEnabled and CameraAimbot.UseAirPart and AirCheckType then
 		CameraAimbot.RealHitPart = CameraAimbot.AirPart
 	else
 		CameraAimbot.RealHitPart = CameraAimbot.HitPart
-	end
-end)
-
-RunService.Stepped:Connect(function()
-	if CameraAimbot.Enabled and CamBindEnabled and CameraAimbot.AutoPred then
-		local Ping = math.round(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
-
-		if Ping < 10 then
-			CameraAimbot.RealPrediction = 0.097
-
-		elseif Ping < 20 then
-			CameraAimbot.RealPrediction = 0.112
-
-		elseif Ping < 30 then
-			CameraAimbot.RealPrediction = 0.115
-
-		elseif Ping < 40 then
-			CameraAimbot.RealPrediction = 0.125
-
-		elseif Ping < 50 then
-			CameraAimbot.RealPrediction = 0.122
-
-		elseif Ping < 60 then
-			CameraAimbot.RealPrediction = 0.123
-
-		elseif Ping < 70 then
-			CameraAimbot.RealPrediction = 0.132
-
-		elseif Ping < 80 then
-			CameraAimbot.RealPrediction = 0.134
-
-		elseif Ping < 90 then
-			CameraAimbot.RealPrediction = 0.137
-
-		elseif Ping < 100 then
-			CameraAimbot.RealPrediction = 0.146
-
-		elseif Ping < 110 then
-			CameraAimbot.RealPrediction = 0.148
-
-		elseif Ping < 120 then
-			CameraAimbot.RealPrediction = 0.144
-
-		elseif Ping < 130 then
-			CameraAimbot.RealPrediction = 0.157
-
-		elseif Ping < 140 then
-			CameraAimbot.RealPrediction = 0.122
-
-		elseif Ping < 150 then
-			CameraAimbot.RealPrediction = 0.152
-
-		elseif Ping < 160 then
-			CameraAimbot.RealPrediction = 0.163
-
-		elseif Ping < 170 then
-			CameraAimbot.RealPrediction = 0.192
-
-		elseif Ping < 180 then
-			CameraAimbot.RealPrediction = 0.193
-
-		elseif Ping < 190 then
-			CameraAimbot.RealPrediction = 0.167
-
-		elseif Ping < 200 then
-			CameraAimbot.RealPrediction = 0.166
-
-		elseif Ping < 210 then
-			CameraAimbot.RealPrediction = 0.168
-
-		elseif Ping < 220 then
-			CameraAimbot.RealPrediction = 0.166
-
-		elseif Ping < 230 then
-			CameraAimbot.RealPrediction = 0.157
-
-		elseif Ping < 240 then
-			CameraAimbot.RealPrediction = 0.168
-
-		elseif Ping < 250 then
-			CameraAimbot.RealPrediction = 0.165
-
-		elseif Ping < 260 then
-			CameraAimbot.RealPrediction = 0.176
-
-		elseif Ping < 270 then
-			CameraAimbot.RealPrediction = 0.177
-
-		elseif Ping < 280 then
-			CameraAimbot.RealPrediction = 0.181
-
-		elseif Ping < 290 then
-			CameraAimbot.RealPrediction = 0.182
-
-		elseif Ping < 300 then
-			CameraAimbot.RealPrediction = 0.185
-		end
-	else
-		CameraAimbot.RealPrediction = CameraAimbot.Prediction
 	end
 end)
 
@@ -1210,9 +1000,11 @@ RunService.Stepped:Connect(function()
 			LocalPlr.Character.BodyEffects.Reload.Value = false
 		end
 
+		--[[
 		if LocalPlr.Character.BodyEffects.Reloading.Value then
 			LocalPlr.Character.BodyEffects.Reloading.Value = false
 		end
+		--]]
 	end
 end)
 
@@ -1223,7 +1015,7 @@ RunService.Stepped:Connect(function()
 end)
 
 RunService.Stepped:Connect(function()
-	if Utilities.AutoReload and LocalPlr.Character:FindFirstChildWhichIsA("Tool").Ammo.Value <= 0 then
+	if Utilities.AutoReload and LocalPlr.Character:FindFirstChildWhichIsA("Tool") and LocalPlr.Character:FindFirstChildWhichIsA("Tool").Ammo and LocalPlr.Character:FindFirstChildWhichIsA("Tool").Ammo.Value <= 0 then
 		ReplicatedStorage.MainEvent:FireServer("Reload", LocalPlr.Character:FindFirstChildWhichIsA("Tool"))
 	end
 end)
@@ -1249,7 +1041,15 @@ end)
 -- RenderStepped Functions
 
 RunService.RenderStepped:Connect(function()
-	if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.KoCheck and (TargetPlr.Character.Humanoid.Health <= 2.25 or LocalPlr.Character.Humanoid.Health <= 2.25) then
+	if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.AutoPred then
+		TargetAimbot.RealPrediction = math.round(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) / 200 * 0.1 + 0.1
+	else
+		TargetAimbot.RealPrediction = TargetAimbot.Prediction
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.KoCheck and (TargetPlr.Character.Humanoid.Health <= 2.15 or LocalPlr.Character.Humanoid.Health <= 2.15) then
 		TargBindEnabled = false
 	end
 end)
@@ -1265,10 +1065,12 @@ end)
 RunService.RenderStepped:Connect(function()
 	local Position, OnScreen
 
-	if TargetAimbot.Resolver then
-		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
-	else
-		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
+	if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.Dot then
+		if TargetAimbot.Resolver then
+			Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
+		else
+			Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
+		end
 	end
 
 	if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.Dot then
@@ -1291,10 +1093,12 @@ end)
 RunService.RenderStepped:Connect(function()
 	local Position, OnScreen
 
-	if TargetAimbot.Resolver then
-		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
-	else
-		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
+	if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.Tracer then
+		if TargetAimbot.Resolver then
+			Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargResolvePos * TargetAimbot.RealPrediction))
+		else
+			Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(TargetPlr.Character[TargetAimbot.RealHitPart].Position + Vector3.new(0, TargetAimbot.RealJumpOffset, 0) + (TargetPlr.Character[TargetAimbot.RealHitPart].AssemblyLinearVelocity * TargetAimbot.RealPrediction))
+		end
 	end
 
 	if TargetAimbot.Enabled and TargBindEnabled and TargetAimbot.Tracer and OnScreen then
@@ -1364,7 +1168,15 @@ RunService.RenderStepped:Connect(function()
 end)
 
 RunService.RenderStepped:Connect(function()
-	if CameraAimbot.Enabled and CamBindEnabled and CameraAimbot.KoCheck and (CamlockPlr.Character.Humanoid.Health <= 2.25 or LocalPlr.Character.Humanoid.Health <= 2.25) then
+	if CameraAimbot.Enabled and CamBindEnabled and CameraAimbot.AutoPred then
+		CameraAimbot.RealPrediction = math.round(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) / 200 * 0.1 + 0.1
+	else
+		CameraAimbot.RealPrediction = CameraAimbot.Prediction
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if CameraAimbot.Enabled and CamBindEnabled and CameraAimbot.KoCheck and (CamlockPlr.Character.Humanoid.Health <= 2.15 or LocalPlr.Character.Humanoid.Health <= 2.15) then
 		CamBindEnabled = false
 	end
 end)
@@ -1372,10 +1184,12 @@ end)
 RunService.RenderStepped:Connect(function()
 	local Position, OnScreen
 
-	if CameraAimbot.Resolver then
-		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(CamlockPlr.Character[CameraAimbot.RealHitPart].Position + Vector3.new(0, CameraAimbot.RealJumpOffset, 0) + (Resolver(CamlockPlr, CameraAimbot) * CameraAimbot.RealPrediction))
-	else
-		Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(CamlockPlr.Character[CameraAimbot.RealHitPart].Position + Vector3.new(0, CameraAimbot.RealJumpOffset, 0) + (CamlockPlr.Character[CameraAimbot.RealHitPart].AssemblyLinearVelocity * CameraAimbot.RealPrediction))
+	if CameraAimbot.Enabled and CamBindEnabled and CameraAimbot.Tracer then
+		if CameraAimbot.Resolver then
+			Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(CamlockPlr.Character[CameraAimbot.RealHitPart].Position + Vector3.new(0, CameraAimbot.RealJumpOffset, 0) + (Resolver(CamlockPlr, CameraAimbot) * CameraAimbot.RealPrediction))
+		else
+			Position, OnScreen = Workspace.CurrentCamera:WorldToViewportPoint(CamlockPlr.Character[CameraAimbot.RealHitPart].Position + Vector3.new(0, CameraAimbot.RealJumpOffset, 0) + (CamlockPlr.Character[CameraAimbot.RealHitPart].AssemblyLinearVelocity * CameraAimbot.RealPrediction))
+		end
 	end
 
 	if CameraAimbot.Enabled and CamBindEnabled and CameraAimbot.Tracer and OnScreen then
